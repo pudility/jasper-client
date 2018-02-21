@@ -699,16 +699,19 @@ class WitAiSTT(AbstractSTTEngine):
 
     def transcribe(self, fp):
         data = fp.read()
-        r = requests.post('https://api.wit.ai/speech?v=20150101',
+        r = requests.post('https://api.wit.ai/speech?v=20170307',
                           data=data,
                           headers=self.headers)
         try:
             r.raise_for_status()
             text = r.json()['_text']
         except requests.exceptions.HTTPError:
-            self._logger.critical('Request failed with response: %r',
-                                  r.text,
-                                  exc_info=True)
+            if r.status_code == 400:
+                self._logger.debug('Request failed with response: %r',
+                                      r.text,
+                                      exc_info=True)
+                self._logger.info('Response: Failed to parse')
+
             return []
         except requests.exceptions.RequestException:
             self._logger.critical('Request failed.', exc_info=True)
